@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>СППР - Система поддержки принятия решений</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Система поддержки принятия решений</h1>
+            <p class="subtitle">Оптимизация планирования ресурсов</p>
+        </header>
+
+        <!-- Вкладки -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('dashboard')">Дашборд</button>
+            <button class="tab-btn" onclick="showTab('resources')">Ресурсы</button>
+            <button class="tab-btn" onclick="showTab('tasks')">Задачи</button>
+            <button class="tab-btn" onclick="showTab('alternatives')">Альтернативы</button>
+            <button class="tab-btn" onclick="showTab('stats')">Статистика</button>
+        </div>
+
+        <!-- Вкладка Дашборд -->
+        <div id="dashboard-tab" class="tab-content active">
+            <div class="section">
+                <h2>Обзор системы</h2>
+                <div class="dashboard-actions">
+                    <button onclick="loadExampleData()" class="btn btn-primary btn-large">Загрузить примерные данные</button>
+                    <button onclick="generateAlternatives()" class="btn btn-primary btn-large">Сгенерировать альтернативы</button>
+                    <button onclick="clearAllData()" class="btn btn-danger btn-large">Очистить все данные</button>
+                </div>
+                
+                <div class="dashboard-stats" id="dashboard-stats">
+                    <div class="stat-card">
+                        <h3>Ресурсов</h3>
+                        <div class="stat-value" id="stat-resources">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Задач</h3>
+                        <div class="stat-value" id="stat-tasks">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Альтернатив</h3>
+                        <div class="stat-value" id="stat-alternatives">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Общая загрузка</h3>
+                        <div class="stat-value" id="stat-load">0%</div>
+                    </div>
+                </div>
+
+                <div class="dashboard-charts">
+                    <div class="chart-container">
+                        <h3>Загрузка ресурсов</h3>
+                        <canvas id="resources-chart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Покрытие задач</h3>
+                        <canvas id="tasks-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Последние альтернативы</h3>
+                    <div id="recent-alternatives" class="alternatives-preview"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Вкладка Ресурсы -->
+        <div id="resources-tab" class="tab-content active">
+            <div class="section">
+                <h2>Добавить новый ресурс</h2>
+                <form id="resource-form" class="form">
+                    <div class="form-group">
+                        <label>Имя ресурса:</label>
+                        <input type="text" id="resource-name" placeholder="Например: Иван Иванов" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Тип ресурса:</label>
+                        <select id="resource-type" required>
+                            <option value="">Выберите тип...</option>
+                            <option value="разработчик">Разработчик</option>
+                            <option value="дизайнер">Дизайнер</option>
+                            <option value="тестировщик">Тестировщик</option>
+                            <option value="аналитик">Аналитик</option>
+                            <option value="менеджер проекта">Менеджер проекта</option>
+                            <option value="другое">Другое</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Доступные часы:</label>
+                        <input type="number" id="resource-hours" placeholder="160" min="1" step="0.1" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Добавить ресурс</button>
+                </form>
+            </div>
+
+            <div class="section">
+                <h2>Список ресурсов</h2>
+                <div class="search-filter-bar">
+                    <input type="text" id="resource-search" placeholder="Поиск по имени или типу..." onkeyup="filterResources()" class="search-input">
+                    <select id="resource-type-filter" onchange="filterResources()" class="filter-select">
+                        <option value="">Все типы</option>
+                        <option value="разработчик">Разработчик</option>
+                        <option value="дизайнер">Дизайнер</option>
+                        <option value="тестировщик">Тестировщик</option>
+                        <option value="аналитик">Аналитик</option>
+                        <option value="менеджер проекта">Менеджер проекта</option>
+                    </select>
+                    <button onclick="loadResources()" class="btn btn-secondary">Обновить</button>
+                </div>
+                <div id="resources-list" class="cards-container"></div>
+            </div>
+        </div>
+
+        <!-- Вкладка Задачи -->
+        <div id="tasks-tab" class="tab-content">
+            <div class="section">
+                <h2>Добавить новую задачу</h2>
+                <form id="task-form" class="form">
+                    <div class="form-group">
+                        <label>Название задачи:</label>
+                        <input type="text" id="task-title" placeholder="Например: Разработка нового функционала" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Требуемые часы:</label>
+                        <input type="number" id="task-hours" placeholder="200" min="1" step="0.1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Приоритет:</label>
+                        <select id="task-priority" required>
+                            <option value="">Выберите приоритет...</option>
+                            <option value="1">1 - Высший</option>
+                            <option value="2">2 - Высокий</option>
+                            <option value="3">3 - Средний</option>
+                            <option value="4">4 - Низкий</option>
+                            <option value="5">5 - Низший</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Добавить задачу</button>
+                </form>
+            </div>
+
+            <div class="section">
+                <h2>Список задач</h2>
+                <div class="search-filter-bar">
+                    <input type="text" id="task-search" placeholder="Поиск по названию..." onkeyup="filterTasks()" class="search-input">
+                    <select id="task-priority-filter" onchange="filterTasks()" class="filter-select">
+                        <option value="">Все приоритеты</option>
+                        <option value="1">Приоритет 1</option>
+                        <option value="2">Приоритет 2</option>
+                        <option value="3">Приоритет 3</option>
+                        <option value="4">Приоритет 4</option>
+                        <option value="5">Приоритет 5</option>
+                    </select>
+                    <button onclick="loadTasks()" class="btn btn-secondary">Обновить</button>
+                </div>
+                <div id="tasks-list" class="cards-container"></div>
+            </div>
+        </div>
+
+        <!-- Вкладка Альтернативы -->
+        <div id="alternatives-tab" class="tab-content">
+            <div class="section">
+                <h2>Альтернативы распределения ресурсов</h2>
+                <p class="info-text">Система предложит несколько вариантов распределения ресурсов по задачам</p>
+                <div class="alternatives-controls">
+                    <button onclick="generateAlternatives()" class="btn btn-primary btn-large">Сгенерировать альтернативы</button>
+                    <button onclick="trainMLModel()" class="btn btn-secondary btn-large" id="train-ml-btn">Обучить ML модель</button>
+                    <div id="ml-info" style="margin-top: 15px; padding: 15px; background: #e7f3ff; border-radius: 8px; display: none;">
+                        <h4>Информация о ML модели</h4>
+                        <p id="ml-status">Загрузка...</p>
+                    </div>
+                    <div id="compare-controls" style="display: none; margin-top: 20px;">
+                        <h3>Сравнение альтернатив</h3>
+                        <select id="compare-alt1" class="filter-select">
+                            <option value="">Выберите первую альтернативу...</option>
+                        </select>
+                        <select id="compare-alt2" class="filter-select">
+                            <option value="">Выберите вторую альтернативу...</option>
+                        </select>
+                        <button onclick="compareAlternatives()" class="btn btn-primary">Сравнить</button>
+                    </div>
+                </div>
+                <div id="alternatives-list" class="alternatives-container"></div>
+                <div id="compare-result" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Вкладка Статистика -->
+        <div id="stats-tab" class="tab-content">
+            <div class="section">
+                <h2>Статистика распределения</h2>
+                <div class="form-group">
+                    <label>Выберите альтернативу для анализа:</label>
+                    <select id="stats-alternative" onchange="loadStats()">
+                        <option value="">Лучшая альтернатива (по умолчанию)</option>
+                    </select>
+                </div>
+                    <button onclick="loadStats()" class="btn btn-secondary">Обновить статистику</button>
+                <div id="stats-content"></div>
+            </div>
+        </div>
+
+        <!-- Уведомления -->
+        <div id="notification" class="notification"></div>
+    </div>
+
+    <!-- Модальное окно для редактирования ресурса -->
+    <div id="edit-resource-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditResourceModal()">&times;</span>
+            <h2>Редактировать ресурс</h2>
+            <form id="edit-resource-form" class="form">
+                <input type="hidden" id="edit-resource-id">
+                <div class="form-group">
+                    <label>Имя ресурса:</label>
+                    <input type="text" id="edit-resource-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Тип ресурса:</label>
+                    <select id="edit-resource-type" required>
+                        <option value="разработчик">Разработчик</option>
+                        <option value="дизайнер">Дизайнер</option>
+                        <option value="тестировщик">Тестировщик</option>
+                        <option value="аналитик">Аналитик</option>
+                        <option value="менеджер проекта">Менеджер проекта</option>
+                        <option value="другое">Другое</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Доступные часы:</label>
+                    <input type="number" id="edit-resource-hours" min="1" step="0.1" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно для редактирования задачи -->
+    <div id="edit-task-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditTaskModal()">&times;</span>
+            <h2>Редактировать задачу</h2>
+            <form id="edit-task-form" class="form">
+                <input type="hidden" id="edit-task-id">
+                <div class="form-group">
+                    <label>Название задачи:</label>
+                    <input type="text" id="edit-task-title" required>
+                </div>
+                <div class="form-group">
+                    <label>Требуемые часы:</label>
+                    <input type="number" id="edit-task-hours" min="1" step="0.1" required>
+                </div>
+                <div class="form-group">
+                    <label>Приоритет:</label>
+                    <select id="edit-task-priority" required>
+                        <option value="1">1 - Высший</option>
+                        <option value="2">2 - Высокий</option>
+                        <option value="3">3 - Средний</option>
+                        <option value="4">4 - Низкий</option>
+                        <option value="5">5 - Низший</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/script.js"></script>
+</body>
+</html>
+
